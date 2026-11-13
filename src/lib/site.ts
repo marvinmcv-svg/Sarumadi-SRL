@@ -41,3 +41,38 @@ export const brands = [
 export function waLink(text: string) {
   return `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(text)}`;
 }
+
+const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const hhmm = (h: number) => `${String(Math.floor(h)).padStart(2, "0")}:${h % 1 ? "30" : "00"}`;
+
+/** schema.org data for Google's local results; opening hours come from `site.hours`. */
+export const localBusinessJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HardwareStore",
+  name: site.name,
+  slogan: site.tagline,
+  url: site.url,
+  logo: `${site.url}/brand/icon.png`,
+  image: `${site.url}/showroom/letrero.webp`,
+  telephone: site.whatsappDisplay.replace(/\s/g, ""),
+  email: site.email,
+  priceRange: "Bs",
+  currenciesAccepted: "BOB",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: `${site.address[0]}, ${site.address[1]}`,
+    addressLocality: "Santa Cruz de la Sierra",
+    addressRegion: "Santa Cruz",
+    addressCountry: "BO",
+  },
+  openingHoursSpecification: Object.entries(site.hours).map(([d, [open, close]]) => ({
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: dayNames[Number(d)],
+    opens: hhmm(open),
+    closes: hhmm(close),
+  })),
+  sameAs: Object.values(site.social),
+};
+
+/** Safe to drop into <script type="application/ld+json">. */
+export const jsonLd = (data: unknown) => JSON.stringify(data).replace(/</g, "\\u003c");

@@ -38,7 +38,7 @@ export function Booking() {
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
   const [tried, setTried] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [sent, setSent] = useState<string | null>(null);
 
   const slots = useMemo(() => {
     if (!day) return [];
@@ -66,8 +66,9 @@ export function Booking() {
     ]
       .filter((l) => l !== null)
       .join("\n");
-    window.open(waLink(text), "_blank", "noopener");
-    setSent(true);
+    const link = waLink(text);
+    window.open(link, "_blank", "noopener");
+    setSent(link);
   }
 
   return (
@@ -168,7 +169,11 @@ export function Booking() {
               <div className="flex gap-3">
                 <Check className="mt-0.5 size-5 shrink-0 text-wa" />
                 <p className="text-sm text-white/85">
-                  Abrimos WhatsApp con tu solicitud. Pulsa <strong>enviar</strong> en el chat: la reserva queda firme cuando nuestro equipo te responde.
+                  Abrimos WhatsApp con tu solicitud. Pulsa <strong>enviar</strong> en el chat: la reserva queda firme cuando nuestro equipo te responde.{" "}
+                  <a href={sent} target="_blank" rel="noreferrer" className="font-semibold text-white underline underline-offset-4">
+                    ¿No se abrió? Ábrelo aquí
+                  </a>
+                  .
                 </p>
               </div>
             ) : (

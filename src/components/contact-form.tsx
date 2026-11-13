@@ -7,6 +7,7 @@ import { WhatsAppIcon } from "./icons";
 
 export function ContactForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [sent, setSent] = useState<string | null>(null);
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -17,7 +18,9 @@ export function ContactForm() {
     setErrors(errs);
     if (Object.keys(errs).length) return;
     const text = [`*Consulta web*`, "", f.mensaje.trim(), "", `Nombre: ${f.nombre.trim()}`, f.empresa.trim() ? `Empresa: ${f.empresa.trim()}` : null].filter((l) => l !== null).join("\n");
-    window.open(waLink(text), "_blank", "noopener");
+    const link = waLink(text);
+    window.open(link, "_blank", "noopener");
+    setSent(link);
   }
 
   return (
@@ -36,6 +39,14 @@ export function ContactForm() {
       <button type="submit" className="flex h-13 w-full items-center justify-center gap-3 rounded-full bg-ink py-3.5 font-semibold text-white transition-colors hover:bg-orange-deep">
         <WhatsAppIcon /> Enviar por WhatsApp
       </button>
+      {sent && (
+        <p role="status" className="text-center text-sm text-steel">
+          Abrimos WhatsApp con tu mensaje: pulsa <strong>enviar</strong> en el chat.{" "}
+          <a href={sent} target="_blank" rel="noreferrer" className="font-semibold text-ink underline underline-offset-4">
+            ¿No se abrió? Ábrelo aquí
+          </a>
+        </p>
+      )}
     </form>
   );
 }

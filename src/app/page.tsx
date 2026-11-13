@@ -6,7 +6,7 @@ import { WhatsAppIcon } from "@/components/icons";
 import { ProductCard } from "@/components/product-card";
 import { departments, lite, products } from "@/lib/catalog";
 import { formatBs, img } from "@/lib/product";
-import { brands, site, waLink } from "@/lib/site";
+import { brands, jsonLd, localBusinessJsonLd, site, waLink } from "@/lib/site";
 
 const featured = products.find((p) => p.sku === "TR-102466") ?? products[0];
 const fresh = products.filter((p) => p !== featured).slice(0, 10);
@@ -43,6 +43,7 @@ const faqs = [
 export default function Home() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(localBusinessJsonLd) }} />
       {/* HERO */}
       <section className="mx-auto grid max-w-[90rem] gap-3 px-3 pt-3 sm:px-4 lg:grid-cols-[1fr_22rem] lg:px-6 xl:grid-cols-[1fr_26rem]">
         <div className="relative isolate flex min-h-[34rem] flex-col justify-end overflow-hidden rounded-[1.75rem] bg-ink p-6 text-white sm:p-10 lg:min-h-[40rem] lg:p-14">
@@ -187,7 +188,11 @@ export default function Home() {
               </div>
               <div>
                 <dt className="label text-white/50">Cuándo</dt>
-                <dd className="mt-1">Lun a Vie 8:30 – 18:30<br />Sáb 8:30 – 12:30</dd>
+                <dd className="mt-1">
+                  {site.hoursLabel.split(" · ").map((l) => (
+                    <span key={l} className="block">{l}</span>
+                  ))}
+                </dd>
               </div>
             </dl>
             <div className="mt-8 flex flex-wrap gap-3">

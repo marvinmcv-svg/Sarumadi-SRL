@@ -48,6 +48,8 @@ const slugify = (s) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
+const fold = (s) => slugify(s);
+
 async function getAll(pathname) {
   const out = [];
   for (let page = 1; ; page++) {
@@ -62,6 +64,12 @@ async function getAll(pathname) {
 function bullets(html) {
   const items = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/g)].map((m) => decode(m[1].replace(/<[^>]+>/g, "")));
   return [...new Set(items)].filter(Boolean);
+}
+
+/** Plain text of the description, minus any bullet list (those become `features`). */
+function plainText(html) {
+  const text = decode(html.replace(/<(ul|ol)[^>]*>[\s\S]*?<\/\1>/g, " ").replace(/<[^>]+>/g, " "));
+  return text.length > 600 ? `${text.slice(0, 597).replace(/\s+\S*$/, "")}…` : text;
 }
 
 const [raw, cats] = await Promise.all([getAll("/products"), getAll("/products/categories")]);
@@ -98,6 +106,10 @@ const products = raw.map((p) => {
     images,
     rating: Number(p.average_rating) || null,
     features: bullets(p.description || ""),
+    ...(() => {
+      const d = plainText(p.short_description || "") || plainText(p.description || "");
+      return d && fold(d) !== fold(decode(p.name)) ? { description: d } : {};
+    })(),
   };
 });
 

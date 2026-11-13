@@ -7,6 +7,8 @@ export type CartLine = { slug: string; name: string; sku: string; price: number;
 
 type Cart = {
   lines: CartLine[];
+  /** False until the saved cart has been read from this browser. */
+  ready: boolean;
   count: number;
   total: number;
   open: boolean;
@@ -14,6 +16,8 @@ type Cart = {
   add: (p: ProductLite, qty?: number) => void;
   setQty: (slug: string, qty: number) => void;
   clear: () => void;
+  /** Applies current catalog prices; drops lines whose product is no longer sold. */
+  reprice: (prices: Record<string, number>) => void;
 };
 
 const Ctx = createContext<Cart | null>(null);
@@ -27,7 +31,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(KEY) ?? "[]");
-      if (Array.isArray(saved)) setLines(saved);
+      if (Array.isArray(saved)) setLines(saved.filter(isLine));
     } catch {
       // corrupt storage: start with an empty cart
     }
@@ -53,9 +57,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clear = useCallback(() => setLines([]), []);
 
+  const reprice = useCallback((prices: Record<string, number>) => {
+    setLines((ls) => {
+      const next = ls.filter((l) => l.slug in prices).map((l) => (prices[l.slug] === l.price ? l : { ...l, price: prices[l.slug] }));
+      return next.length === ls.length && next.every((l, i) => l === ls[i]) ? ls : next;
+    });
+  }, []);
+
   const value = useMemo<Cart>(
     () => ({
       lines,
+      ready,
       count: lines.reduce((n, l) => n + l.qty, 0),
       total: lines.reduce((n, l) => n + l.qty * l.price, 0),
       open,
@@ -63,12 +75,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       add,
       setQty,
       clear,
+      reprice,
     }),
-    [lines, open, add, setQty, clear],
+    [lines, ready, open, add, setQty, clear, reprice],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
+
+const isLine = (l: unknown): l is CartLine => {
+  const o = l as CartLine;
+  return !!o && typeof o.slug === "string" && typeof o.name === "string" && typeof o.sku === "string" && Number.isFinite(o.price) && Number.isInteger(o.qty) && o.qty > 0;
+};
 
 export function useCart() {
   const c = useContext(Ctx);

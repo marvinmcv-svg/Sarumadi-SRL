@@ -11,6 +11,18 @@ type Dept = { slug: string; name: string; count: number };
 const PAGE = 24;
 const sorts = { nuevo: "Más recientes", menor: "Precio: menor a mayor", mayor: "Precio: mayor a menor", az: "Nombre A–Z" } as const;
 type Sort = keyof typeof sorts;
+const prices = {
+  "0-20": "Hasta Bs 20",
+  "20-50": "Bs 20 – 50",
+  "50-200": "Bs 50 – 200",
+  "200-": "Más de Bs 200",
+} as const;
+type Price = keyof typeof prices;
+const inPrice = (p: ProductLite, band: Price | "") => {
+  if (!band) return true;
+  const [lo, hi] = band.split("-").map((n) => (n ? Number(n) : Infinity));
+  return p.price >= lo && p.price < hi;
+};
 
 export function Shop({ items, departments, brands }: { items: ProductLite[]; departments: Dept[]; brands: string[] }) {
   const params = useSearchParams();
@@ -21,6 +33,7 @@ export function Shop({ items, departments, brands }: { items: ProductLite[]; dep
   const depto = params.get("depto") ?? "";
   const marca = params.get("marca") ?? "";
   const sub = params.get("sub") ?? "";
+  const precio = ((params.get("precio") ?? "") in prices ? params.get("precio") : "") as Price | "";
   const orden = (params.get("orden") as Sort) in sorts ? (params.get("orden") as Sort) : "nuevo";
 
   const [draft, setDraft] = useState(q);
@@ -28,7 +41,7 @@ export function Shop({ items, departments, brands }: { items: ProductLite[]; dep
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => setDraft(q), [q]);
-  useEffect(() => setShown(PAGE), [q, depto, marca, sub, orden]);
+  useEffect(() => setShown(PAGE), [q, depto, marca, sub, orden, precio]);
 
   const set = (changes: Record<string, string>) => {
     const next = new URLSearchParams(params);
@@ -44,7 +57,10 @@ export function Shop({ items, departments, brands }: { items: ProductLite[]; dep
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft]);
 
-  const base = useMemo(() => items.filter((p) => (!q || matches(p, q)) && (!marca || p.brand === marca)), [items, q, marca]);
+  const base = useMemo(
+    () => items.filter((p) => (!q || matches(p, q)) && (!marca || p.brand === marca) && inPrice(p, precio)),
+    [items, q, marca, precio],
+  );
   const inDept = useMemo(() => (depto ? base.filter((p) => p.dept === depto) : base), [base, depto]);
   const subs = useMemo(() => {
     if (!depto) return [];
@@ -52,6 +68,12 @@ export function Shop({ items, departments, brands }: { items: ProductLite[]; dep
     for (const p of inDept) if (p.sub) m.set(p.sub, (m.get(p.sub) ?? 0) + 1);
     return [...m.entries()].sort((a, b) => b[1] - a[1]);
   }, [inDept, depto]);
+
+  // Counts per price band, given every other active filter.
+  const priceCounts = useMemo(() => {
+    const pool = items.filter((p) => (!q || matches(p, q)) && (!marca || p.brand === marca) && (!depto || p.dept === depto) && (!sub || p.sub === sub));
+    return Object.fromEntries(Object.keys(prices).map((k) => [k, pool.filter((p) => inPrice(p, k as Price)).length])) as Record<Price, number>;
+  }, [items, q, marca, depto, sub]);
 
   const results = useMemo(() => {
     const r = sub ? inDept.filter((p) => p.sub === sub) : inDept;
@@ -67,6 +89,7 @@ export function Shop({ items, departments, brands }: { items: ProductLite[]; dep
   if (deptName) chips.push({ label: deptName, clear: { depto: "", sub: "" } });
   if (sub) chips.push({ label: sub, clear: { sub: "" } });
   if (marca) chips.push({ label: marca, clear: { marca: "" } });
+  if (precio) chips.push({ label: prices[precio], clear: { precio: "" } });
 
   const filters = (
     <div className="space-y-8">
@@ -101,6 +124,17 @@ export function Shop({ items, departments, brands }: { items: ProductLite[]; dep
             </button>
           ))}
         </div>
+      </FilterGroup>
+      <FilterGroup title="Precio">
+        {Object.entries(prices).map(([k, label]) => (
+          <FilterRow
+            key={k}
+            active={precio === k}
+            onClick={() => set({ precio: precio === k ? "" : k })}
+            label={label}
+            count={priceCounts[k as Price]}
+          />
+        ))}
       </FilterGroup>
     </div>
   );

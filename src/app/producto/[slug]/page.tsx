@@ -7,7 +7,7 @@ import { BuyBox, Gallery } from "@/components/buy-box";
 import { ProductCard } from "@/components/product-card";
 import { getProduct, lite, products } from "@/lib/catalog";
 import { formatBs, img } from "@/lib/product";
-import { site } from "@/lib/site";
+import { jsonLd, site } from "@/lib/site";
 
 export function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }));
@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: PageProps<"/producto/[slug]">
   return {
     title: p.name,
     description: `${p.name} (${p.sku})${p.brand ? ` de ${p.brand}` : ""} a ${formatBs(p.price)} en Sarumadi SRL, Santa Cruz.`,
+    alternates: { canonical: `/producto/${p.slug}` },
     openGraph: { images: [img(p.images[0])] },
   };
 }
@@ -30,19 +31,37 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
   const pool = products.filter((o) => o !== p && o.dept === p.dept);
   const related = [...pool.filter((o) => o.sub === p.sub), ...pool.filter((o) => o.sub !== p.sub)].slice(0, 5);
 
-  const jsonLd = {
+  const productLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: p.name,
     sku: p.sku,
     image: p.images.map((f) => site.url + img(f)),
     ...(p.brand ? { brand: { "@type": "Brand", name: p.brand } } : {}),
-    offers: { "@type": "Offer", price: p.price.toFixed(2), priceCurrency: "BOB", url: `${site.url}/producto/${p.slug}` },
+    ...(p.description ? { description: p.description } : {}),
+    offers: {
+      "@type": "Offer",
+      price: p.price.toFixed(2),
+      priceCurrency: "BOB",
+      url: `${site.url}/producto/${p.slug}`,
+      seller: { "@type": "Organization", name: site.name },
+    },
+  };
+  const crumbs = [
+    ["Tienda", "/tienda"],
+    [p.deptName, `/tienda?depto=${p.dept}`],
+    ...(p.sub ? [[p.sub, `/tienda?depto=${p.dept}&sub=${encodeURIComponent(p.sub)}`]] : []),
+    [p.name, `/producto/${p.slug}`],
+  ];
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map(([name, path], i) => ({ "@type": "ListItem", position: i + 1, name, item: site.url + path })),
   };
 
   return (
     <div className="mx-auto max-w-[90rem] px-4 pt-6 sm:px-6 lg:px-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd([productLd, breadcrumbLd]) }} />
 
       <nav aria-label="Ruta" className="label no-scrollbar flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-steel">
         <Link href="/tienda" className="hover:text-orange-deep">Tienda</Link>
@@ -81,6 +100,8 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
           <div className="mt-6">
             <BuyBox p={lite(p)} />
           </div>
+
+          {p.description && <p className="mt-8 text-[0.9375rem] leading-relaxed text-steel">{p.description}</p>}
 
           {p.features.length > 0 && (
             <div className="mt-8">

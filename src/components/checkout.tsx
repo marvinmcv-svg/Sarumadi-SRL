@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Check, Store, Truck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Info, Store, Truck } from "lucide-react";
 import { formatBs } from "@/lib/product";
 import { site, waLink } from "@/lib/site";
 import { useCart } from "./cart";
@@ -10,11 +10,21 @@ import { CartLineRow } from "./cart-drawer";
 import { Field, inputCls } from "./field";
 import { WhatsAppIcon } from "./icons";
 
-export function Checkout() {
-  const { lines, total, clear } = useCart();
+export function Checkout({ prices }: { prices: Record<string, number> }) {
+  const { lines, ready, total, clear, reprice } = useCart();
   const [entrega, setEntrega] = useState<"retiro" | "envio">("retiro");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [sent, setSent] = useState<string | null>(null);
+  const [sent, setSent] = useState<{ ref: string; link: string } | null>(null);
+  const [repriced, setRepriced] = useState(false);
+
+  // A cart saved days ago may hold old prices or discontinued products.
+  useEffect(() => {
+    if (!ready) return;
+    if (lines.some((l) => prices[l.slug] !== l.price)) {
+      setRepriced(true);
+      reprice(prices);
+    }
+  }, [ready, lines, prices, reprice]);
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -43,8 +53,10 @@ export function Checkout() {
       .filter((l) => l !== null)
       .join("\n");
 
-    window.open(waLink(text), "_blank", "noopener");
-    setSent(ref);
+    const link = waLink(text);
+    window.open(link, "_blank", "noopener");
+    // Keep the link: if the popup was blocked, the customer can still send the order.
+    setSent({ ref, link });
     clear();
   }
 
@@ -54,16 +66,23 @@ export function Checkout() {
         <span className="mx-auto grid size-16 place-items-center rounded-full bg-wa text-white">
           <Check className="size-8" />
         </span>
-        <h1 className="display mt-6 text-4xl sm:text-5xl">Pedido {sent} listo para enviar</h1>
+        <h1 className="display mt-6 text-4xl sm:text-5xl">Pedido {sent.ref} listo para enviar</h1>
         <p className="mt-4 text-steel">
           Abrimos WhatsApp con tu pedido escrito. Pulsa <strong>enviar</strong> en el chat para que nuestro equipo lo reciba; te confirmamos stock, pago y entrega en horario de atención ({site.hoursLabel}).
         </p>
-        <Link href="/tienda" className="mt-8 inline-flex h-12 items-center rounded-full bg-ink px-7 font-semibold text-white hover:bg-orange-deep">
-          Seguir comprando
-        </Link>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <a href={sent.link} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center gap-2 rounded-full bg-wa px-7 font-semibold text-white">
+            <WhatsAppIcon /> ¿No se abrió? Abrir WhatsApp
+          </a>
+          <Link href="/tienda" className="inline-flex h-12 items-center rounded-full bg-ink px-7 font-semibold text-white hover:bg-orange-deep">
+            Seguir comprando
+          </Link>
+        </div>
       </div>
     );
   }
+
+  if (!ready) return <div className="min-h-[60vh]" aria-busy="true" />;
 
   if (lines.length === 0) {
     return (
@@ -83,6 +102,12 @@ export function Checkout() {
         <div>
           <h1 className="display text-4xl sm:text-6xl">Finalizar pedido</h1>
           <p className="mt-3 text-steel">Sin pagos en línea: tu pedido llega a un asesor por WhatsApp, que confirma disponibilidad, pago y entrega.</p>
+          {repriced && (
+            <p role="status" className="mt-4 flex gap-2.5 rounded-2xl border border-orange/40 bg-orange/10 px-4 py-3 text-sm">
+              <Info className="mt-0.5 size-4 shrink-0 text-orange-deep" />
+              Actualizamos tu carrito con los precios vigentes del catálogo. Revisa el resumen antes de enviar.
+            </p>
+          )}
         </div>
 
         <fieldset className="space-y-4">

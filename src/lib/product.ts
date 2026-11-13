@@ -12,6 +12,8 @@ export type Product = {
   images: string[];
   rating: number | null;
   features: string[];
+  /** Plain-text description from the store, when it has one. */
+  description?: string;
 };
 
 /** What client components need to list, filter and add to cart. */
