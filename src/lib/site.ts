@@ -14,8 +14,7 @@ export const site = {
     facebook: "https://www.facebook.com/sarumadi.bo",
     youtube: "https://www.youtube.com/@TioBladyTeEnse%C3%B1a",
   },
-  // ASSUMPTION: opening hours are not published on the current site.
-  // Confirm with the store and adjust; the booking calendar reads from here.
+  // Confirmed by the store. The booking calendar and Google listing read from here.
   hours: {
     // 0 = Sunday ... 6 = Saturday; [openHour, closeHour] in 24h local time
     1: [8.5, 18.5],
@@ -26,6 +25,8 @@ export const site = {
     6: [8.5, 12.5],
   } as Record<number, [number, number]>,
   hoursLabel: "Lun a Vie 8:30 – 18:30 · Sáb 8:30 – 12:30",
+  // Store policies, shown on /politicas and in product structured data.
+  returnDays: 7,
 } as const;
 
 export const brands = [

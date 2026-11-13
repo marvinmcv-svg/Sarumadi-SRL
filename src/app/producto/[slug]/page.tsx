@@ -5,6 +5,7 @@ import { CalendarCheck, ChevronRight, MessageSquareText, Store } from "lucide-re
 import { AskButton } from "@/components/ask-bar";
 import { BuyBox, Gallery } from "@/components/buy-box";
 import { ProductCard } from "@/components/product-card";
+import { guideFor } from "@/data/guides";
 import { getProduct, lite, products } from "@/lib/catalog";
 import { formatBs, img } from "@/lib/product";
 import { jsonLd, site } from "@/lib/site";
@@ -28,6 +29,7 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
   const p = getProduct((await params).slug);
   if (!p) notFound();
 
+  const guide = guideFor(p.dept, p.sub);
   const pool = products.filter((o) => o !== p && o.dept === p.dept);
   const related = [...pool.filter((o) => o.sub === p.sub), ...pool.filter((o) => o.sub !== p.sub)].slice(0, 5);
 
@@ -45,6 +47,13 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
       priceCurrency: "BOB",
       url: `${site.url}/producto/${p.slug}`,
       seller: { "@type": "Organization", name: site.name },
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "BO",
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: site.returnDays,
+        returnMethod: "https://schema.org/ReturnInStore",
+      },
     },
   };
   const crumbs = [
@@ -123,7 +132,13 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
             </li>
             <li className="flex items-center gap-3 px-5 py-4">
               <Store className="size-5 shrink-0 text-orange" />
-              <span>Retiro en showroom ({site.address[0]}) o envío coordinado.</span>
+              <span>
+                Retiro en showroom ({site.address[0]}) o envío a todo Bolivia.{" "}
+                <Link href="/politicas" className="underline underline-offset-4 hover:text-orange-deep">
+                  Cambios en {site.returnDays} días y garantía de fábrica
+                </Link>
+                .
+              </span>
             </li>
             <li className="flex items-center gap-3 px-5 py-4">
               <CalendarCheck className="size-5 shrink-0 text-orange" />
@@ -138,6 +153,31 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
           </AskButton>
         </div>
       </div>
+
+      {guide && (
+        <section aria-labelledby="guia" className="mt-20 grid gap-8 rounded-[1.75rem] border border-line bg-white p-6 sm:p-10 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
+          <div>
+            <p className="label text-orange-deep">Guía de compra</p>
+            <h2 id="guia" className="display mt-3 text-3xl sm:text-4xl">
+              {p.sub ?? p.deptName}
+            </h2>
+            <p className="mt-4 text-steel">{guide.use}</p>
+          </div>
+          <div>
+            <h3 className="label text-steel">Antes de comprar</h3>
+            <ul className="mt-3 space-y-3">
+              {guide.tips.map((t) => (
+                <li key={t} className="flex gap-3 text-[0.9375rem]">
+                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-orange" /> {t}
+                </li>
+              ))}
+            </ul>
+            <AskButton question={`¿Cuál me conviene entre los productos de ${p.sub ?? p.deptName}? Te cuento para qué lo necesito.`} className="mt-6 text-sm font-semibold underline underline-offset-4 hover:text-orange-deep">
+              ¿No sabes cuál elegir? Pregúntale al asistente
+            </AskButton>
+          </div>
+        </section>
+      )}
 
       {related.length > 0 && (
         <section className="mt-24">

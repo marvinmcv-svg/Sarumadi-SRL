@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
+import { Analytics } from "@vercel/analytics/next";
 import "@fontsource-variable/archivo/wdth.css";
 import "@fontsource-variable/inter-tight";
 import "@fontsource/jetbrains-mono/400.css";
@@ -37,6 +39,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Footer />
           <CartDrawer />
           <ChatWidget />
+          {/* Anonymous, cookieless page views (Vercel Web Analytics). */}
+          <Suspense>
+            <Analytics />
+          </Suspense>
         </CartProvider>
       </body>
     </html>

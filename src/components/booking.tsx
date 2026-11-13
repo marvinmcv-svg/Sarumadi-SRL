@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@vercel/analytics";
 import { useEffect, useMemo, useState } from "react";
 import { Check, FileText, MessagesSquare, PackageCheck, Store } from "lucide-react";
 import { site, waLink } from "@/lib/site";
@@ -67,6 +68,7 @@ export function Booking() {
       .filter((l) => l !== null)
       .join("\n");
     const link = waLink(text);
+    track("Reserva enviada", { motivo: reason });
     window.open(link, "_blank", "noopener");
     setSent(link);
   }

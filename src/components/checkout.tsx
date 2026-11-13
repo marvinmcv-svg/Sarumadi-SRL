@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { track } from "@vercel/analytics";
 import { useEffect, useState } from "react";
 import { Check, Info, Store, Truck } from "lucide-react";
 import { formatBs } from "@/lib/product";
@@ -54,6 +55,8 @@ export function Checkout({ prices }: { prices: Record<string, number> }) {
       .join("\n");
 
     const link = waLink(text);
+    // No personal data: just what the order looks like.
+    track("Pedido enviado", { productos: lines.length, unidades: lines.reduce((n, l) => n + l.qty, 0), total: Math.round(total), entrega });
     window.open(link, "_blank", "noopener");
     // Keep the link: if the popup was blocked, the customer can still send the order.
     setSent({ ref, link });
@@ -176,7 +179,11 @@ export function Checkout({ prices }: { prices: Record<string, number> }) {
             <span className="label text-steel">Subtotal</span>
             <span className="display text-3xl">{formatBs(total)}</span>
           </div>
-          <p className="mt-2 text-xs text-steel-2">Precios en bolivianos. El total final (incluido el envío, si aplica) lo confirma el asesor.</p>
+          <p className="mt-2 text-xs text-steel-2">Precios en bolivianos. El total final (incluido el envío, si aplica) lo confirma el asesor.{" "}
+            <Link href="/politicas" className="underline underline-offset-2 hover:text-ink">
+              Envíos, cambios y garantía
+            </Link>
+          </p>
         </div>
       </aside>
     </div>

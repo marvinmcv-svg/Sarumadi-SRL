@@ -60,6 +60,9 @@ export function Footer() {
             <Link href="/nosotros" className="hover:text-orange">Quiénes somos</Link>
             <Link href="/contacto" className="hover:text-orange">Contacto</Link>
             <Link href="/#preguntas" className="hover:text-orange">Preguntas frecuentes</Link>
+            <Link href="/politicas#envios" className="hover:text-orange">Envíos</Link>
+            <Link href="/politicas#cambios" className="hover:text-orange">Cambios y garantía</Link>
+            <Link href="/politicas#privacidad" className="hover:text-orange">Privacidad</Link>
             {Object.entries(site.social).map(([k, url]) => (
               <a key={k} href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 capitalize hover:text-orange">
                 {k} <ArrowUpRight className="size-3.5" />

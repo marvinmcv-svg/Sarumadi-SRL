@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@vercel/analytics";
 import { useState } from "react";
 import { waLink } from "@/lib/site";
 import { Field, inputCls } from "./field";
@@ -19,6 +20,7 @@ export function ContactForm() {
     if (Object.keys(errs).length) return;
     const text = [`*Consulta web*`, "", f.mensaje.trim(), "", `Nombre: ${f.nombre.trim()}`, f.empresa.trim() ? `Empresa: ${f.empresa.trim()}` : null].filter((l) => l !== null).join("\n");
     const link = waLink(text);
+    track("Consulta enviada");
     window.open(link, "_blank", "noopener");
     setSent(link);
   }

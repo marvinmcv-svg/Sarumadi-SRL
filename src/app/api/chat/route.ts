@@ -19,7 +19,12 @@ const Body = z.object({
 
 type Event = { t: "text"; v: string } | { t: "products"; v: ReturnType<typeof lite>[] } | { t: "error"; v: string };
 
-// Best-effort per-instance throttle; put a real limiter (e.g. Vercel Firewall) in front for production.
+// Abuse protection, in layers:
+// 1. A Vercel Firewall rate-limit rule on /api/chat (configured in the project, see README) stops floods
+//    before this function runs.
+// 2. Per-IP throttle below: best effort, since each serverless instance keeps its own counts.
+// 3. Hourly cap on Claude calls per instance: past it, the chat answers with the free catalog search
+//    instead of the model, so a burst of traffic can't run up the API bill.
 const hits = new Map<string, number[]>();
 function throttled(ip: string) {
   const now = Date.now();
@@ -30,7 +35,27 @@ function throttled(ip: string) {
   return recent.length > 12;
 }
 
+const HOURLY_AI_LIMIT = Number(process.env.CHAT_HOURLY_LIMIT) || 300;
+let aiWindow = { start: 0, count: 0 };
+function aiBudgetLeft() {
+  const now = Date.now();
+  if (now - aiWindow.start > 3_600_000) aiWindow = { start: now, count: 0 };
+  return ++aiWindow.count <= HOURLY_AI_LIMIT;
+}
+
+/** Browsers send Origin on POST: refuse calls made from other websites. */
+function foreignOrigin(req: Request) {
+  const origin = req.headers.get("origin");
+  if (!origin) return false;
+  try {
+    return new URL(origin).host !== (req.headers.get("x-forwarded-host") ?? req.headers.get("host"));
+  } catch {
+    return true;
+  }
+}
+
 export async function POST(req: Request) {
+  if (foreignOrigin(req)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success || parsed.data.messages.at(-1)?.role !== "user") {
     return Response.json({ error: "Solicitud inválida." }, { status: 400 });
@@ -45,7 +70,7 @@ export async function POST(req: Request) {
     async start(controller) {
       const send = (e: Event) => controller.enqueue(encoder.encode(JSON.stringify(e) + "\n"));
       try {
-        if (process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN) await runClaude(messages, send);
+        if ((process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN) && aiBudgetLeft()) await runClaude(messages, send);
         else runOffline(messages.at(-1)!.content, send);
       } catch (err) {
         console.error("chat error", err);

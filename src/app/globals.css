@@ -68,6 +68,9 @@ body {
   line-height: 0.92;
   letter-spacing: -0.02em;
   text-transform: uppercase;
+  /* Wide uppercase words can exceed a phone's width: hyphenate (lang="es") or break them. */
+  hyphens: auto;
+  overflow-wrap: break-word;
 }
 
 .label {
@@ -96,6 +99,25 @@ body {
     rgb(20 23 26 / 0.07) 22px
   );
 }
+
+/* Long-form text pages (políticas). */
+.policy section { scroll-margin-top: 8rem; }
+.policy h2 {
+  font-family: var(--font-display);
+  font-variation-settings: "wdth" 118;
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  font-size: clamp(1.75rem, 8vw, 2.25rem);
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+.policy h3 { margin-top: 1.75rem; font-size: 1.125rem; font-weight: 600; }
+.policy p, .policy ul { margin-top: 0.75rem; color: var(--color-steel); }
+.policy ul { list-style: disc; padding-left: 1.25rem; }
+.policy li + li { margin-top: 0.375rem; }
+.policy strong { color: var(--color-ink); }
 
 /* Product photos ship on white; multiply drops them onto the tile colour. */
 .on-tile {

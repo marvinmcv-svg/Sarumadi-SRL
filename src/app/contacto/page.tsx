@@ -16,7 +16,7 @@ export default function Contacto() {
       <h1 className="display mt-4 text-5xl sm:text-7xl">Hablemos</h1>
       <p className="mt-4 max-w-2xl text-lg text-steel">Si necesitas asesoramiento en alguna de nuestras marcas, no dudes en ponerte en contacto con nosotros.</p>
 
-      <div className="mt-12 grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+      <div className="mt-12 grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16 [&>*]:min-w-0">
         <div className="space-y-3">
           <a href={waLink("Hola Sarumadi, tengo una consulta desde la web.")} target="_blank" rel="noreferrer" className="group flex items-center gap-4 rounded-2xl bg-wa p-6 text-white">
             <WhatsAppIcon className="size-8" />

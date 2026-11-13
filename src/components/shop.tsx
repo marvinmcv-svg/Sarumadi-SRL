@@ -159,14 +159,14 @@ export function Shop({ items, departments, brands }: { items: ProductLite[]; dep
           />
         </div>
         <div className="flex gap-3">
-          <button onClick={() => setFiltersOpen(true)} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border border-line bg-white px-5 text-sm font-semibold lg:hidden">
+          <button onClick={() => setFiltersOpen(true)} className="flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-full border border-line bg-white px-5 text-sm font-semibold lg:hidden">
             <SlidersHorizontal className="size-4" /> Filtros{chips.length ? ` (${chips.length})` : ""}
           </button>
           <select
             value={orden}
             onChange={(e) => set({ orden: e.target.value === "nuevo" ? "" : e.target.value })}
             aria-label="Ordenar"
-            className="h-12 flex-1 rounded-full border border-line bg-white px-4 text-sm font-medium focus:border-ink focus:outline-none"
+            className="h-12 min-w-0 flex-1 rounded-full border border-line bg-white px-4 text-sm font-medium focus:border-ink focus:outline-none"
           >
             {Object.entries(sorts).map(([k, v]) => (
               <option key={k} value={k}>

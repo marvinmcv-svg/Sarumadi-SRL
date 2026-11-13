@@ -24,7 +24,18 @@ const faqs = [
   },
   {
     q: "¿Hacen envíos fuera de Santa Cruz?",
-    a: "Coordinamos cada envío por WhatsApp según tu ciudad y el volumen del pedido. Indica tu ubicación al finalizar la compra y un asesor te confirma opciones y costo.",
+    a: "Sí. Entregamos en Santa Cruz de la Sierra y enviamos al resto de Bolivia por empresas de transporte. Indica tu ciudad al finalizar la compra y un asesor te confirma costo y plazo antes de despachar.",
+  },
+  {
+    q: "¿Puedo cambiar o devolver un producto?",
+    a: (
+      <>
+        Sí, dentro de {site.returnDays} días, sin uso, en su empaque original y con factura o nota de venta. Si tiene una falla, aplica la garantía del fabricante y la gestionamos en el showroom.{" "}
+        <Link href="/politicas#cambios" className="font-semibold text-ink underline underline-offset-4">
+          Ver políticas
+        </Link>
+      </>
+    ),
   },
   {
     q: "¿Puedo ver los productos antes de comprar?",

@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@vercel/analytics";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ProductLite } from "@/lib/product";
 
@@ -43,6 +44,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [lines, ready]);
 
   const add = useCallback((p: ProductLite, qty = 1) => {
+    track("Añadir al carrito", { sku: p.sku, marca: p.brand, cantidad: qty });
     setLines((ls) => {
       const hit = ls.find((l) => l.slug === p.slug);
       if (hit) return ls.map((l) => (l === hit ? { ...l, qty: Math.min(999, l.qty + qty) } : l));

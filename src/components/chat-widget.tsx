@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { track } from "@vercel/analytics";
 import Link from "next/link";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { ArrowUp, Plus, Sparkles, X } from "lucide-react";
@@ -20,7 +21,7 @@ const starters = [
 
 /** Turns site paths the assistant writes (/reservar, /checkout…) into links. */
 function RichText({ text }: { text: string }) {
-  const parts = text.split(/(\/(?:reservar|checkout|tienda|contacto|nosotros)\b)/g);
+  const parts = text.split(/(\/(?:reservar|checkout|tienda|contacto|nosotros|politicas)\b)/g);
   return (
     <>
       {parts.map((part, i) =>
@@ -68,6 +69,8 @@ export function ChatWidget() {
     const q = question.trim();
     if (!q || busy) return;
     const history: Msg[] = [...msgs.filter((m) => !m.error && m.content), { role: "user", content: q }];
+    // Count only: questions can contain personal details, so their text is not sent.
+    track("Pregunta al asistente", { turno: history.filter((m) => m.role === "user").length });
     setMsgs([...history, { role: "assistant", content: "" }]);
     setInput("");
     setBusy(true);
@@ -115,7 +118,7 @@ export function ChatWidget() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-5 right-5 z-40 flex h-13 items-center gap-2.5 rounded-full border border-white/10 bg-ink py-3.5 pl-4 pr-5 text-sm font-semibold text-white shadow-2xl shadow-ink/30 transition-transform hover:-translate-y-0.5"
+          className="fixed bottom-5 right-5 z-40 flex h-13 max-lg:[[data-buybar]_&]:bottom-24 items-center gap-2.5 rounded-full border border-white/10 bg-ink py-3.5 pl-4 pr-5 text-sm font-semibold text-white shadow-2xl shadow-ink/30 transition-transform hover:-translate-y-0.5"
         >
           <span className="grid size-6 place-items-center rounded-full bg-orange">
             <Sparkles className="size-3.5" />

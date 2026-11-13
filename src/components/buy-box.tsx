@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, ShoppingBag } from "lucide-react";
 import { formatBs, img, type ProductLite } from "@/lib/product";
 import { waLink } from "@/lib/site";
@@ -39,9 +39,39 @@ export function BuyBox({ p }: { p: ProductLite }) {
   const { add } = useCart();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const [offscreen, setOffscreen] = useState(false);
+
+  // On phones the buy box scrolls away: show a sticky bar once it's out of view.
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setOffscreen(!e.isIntersecting && e.boundingClientRect.top < 0));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  useEffect(() => {
+    const root = document.documentElement;
+    if (offscreen) root.dataset.buybar = "";
+    else delete root.dataset.buybar;
+    return () => {
+      delete root.dataset.buybar;
+    };
+  }, [offscreen]);
 
   return (
-    <div className="space-y-3">
+    <div ref={box} className="space-y-3">
+      {offscreen && (
+        <div className="fixed inset-x-0 bottom-0 z-30 flex animate-pop items-center gap-3 border-t border-line bg-white/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl backdrop-blur lg:hidden">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium">{p.name}</p>
+            <p className="font-display text-lg font-bold leading-tight">{formatBs(p.price)}</p>
+          </div>
+          <button onClick={() => add(p, qty)} className="flex h-12 shrink-0 items-center gap-2 rounded-full bg-orange px-5 font-semibold text-white">
+            <ShoppingBag className="size-5" /> Añadir
+          </button>
+        </div>
+      )}
       <div className="flex gap-3">
         <QtyStepper qty={qty} onChange={(n) => setQty(Math.max(1, Math.min(999, n)))} />
         <button

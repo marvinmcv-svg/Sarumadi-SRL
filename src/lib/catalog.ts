@@ -1,9 +1,12 @@
 import data from "@/data/products.json";
+// Drafted by `npm run describe` for products the store left without a description.
+import drafts from "@/data/descriptions.json";
 import { fold, queryWords, type Product, type ProductLite } from "./product";
 
 export type { Product, ProductLite };
 
-export const products = data as Product[];
+const extra = drafts as Record<string, string>;
+export const products = (data as Product[]).map((p) => (p.description || !extra[p.slug] ? p : { ...p, description: extra[p.slug] }));
 
 export const lite = (p: Product): ProductLite => ({
   slug: p.slug,

@@ -16,7 +16,7 @@ export default function Nosotros() {
       <p className="label flex items-center gap-2 text-orange-deep">
         <span className="h-px w-8 bg-orange" /> Quiénes somos
       </p>
-      <h1 className="display mt-4 max-w-5xl text-5xl sm:text-8xl">
+      <h1 className="display mt-4 max-w-5xl text-4xl min-[400px]:text-5xl sm:text-8xl">
         Importamos las herramientas que <span className="text-orange">construyen</span> Bolivia.
       </h1>
 
